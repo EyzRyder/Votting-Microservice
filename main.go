@@ -4,7 +4,6 @@ import (
     "fmt"
     "log"
     "net/http"
-    "time"
 
     "go-api/controllers"
     "go-api/ws"
