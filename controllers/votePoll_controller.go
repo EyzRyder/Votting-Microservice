@@ -93,8 +93,8 @@ func VotePoll_Controller(vote *util.VotingPubSub) http.HandlerFunc {
 			row := db.QueryRow("SELECT id, sessionId, pollId, pollOptionId, createdat FROM vote WHERE pollId = $1 AND sessionId = $2",
 				pollId, sessionId)
 
-			var vote models.Vote
-			err = row.Scan(&vote.Id, &vote.SessionId, &vote.PollId, &vote.PollOptionId, &vote.CreatedAt)
+			var voteRow models.Vote
+			err = row.Scan(&voteRow.Id, &voteRow.SessionId, &voteRow.PollId, &voteRow.PollOptionId, &voteRow.CreatedAt)
 
 			if err == sql.ErrNoRows {
 			} else if err != nil {
@@ -102,7 +102,7 @@ func VotePoll_Controller(vote *util.VotingPubSub) http.HandlerFunc {
 				log.Fatal(err)
 				return
 			} else {
-				if vote.PollId == pollId && vote.PollOptionId != pollOption.PollOptionId {
+				if voteRow.PollId == pollId && voteRow.PollOptionId != pollOption.PollOptionId {
 
 					_, err := db.Exec("DELETE FROM vote WHERE pollId = $1 AND sessionId=$2",
 						pollId, sessionId)
@@ -112,14 +112,17 @@ func VotePoll_Controller(vote *util.VotingPubSub) http.HandlerFunc {
 						return
 					}
 
-					_, err = redisClient.ZIncrBy(ctx, pollId, -1.0, vote.PollOptionId).Result()
+					resultDelet, err := redisClient.ZIncrBy(ctx, pollId, -1.0, voteRow.PollOptionId).Result()
 					if err != nil {
 						http.Error(w, "Failed to Decrement vote count in Redis", http.StatusInternalServerError)
 						log.Fatal(err)
 						return
 					}
+					vote.Publish(pollId, util.Message{
+						PollOptionID: voteRow.PollOptionId,
+						Votes:        resultDelet})
 
-				} else if vote.PollId == pollId && vote.PollOptionId == pollOption.PollOptionId {
+				} else if voteRow.PollId == pollId && voteRow.PollOptionId == pollOption.PollOptionId {
 					http.Error(w, "You have already voted on this poll", http.StatusBadRequest)
 					return
 				}
@@ -136,7 +139,7 @@ func VotePoll_Controller(vote *util.VotingPubSub) http.HandlerFunc {
 			return
 		}
 
-        result, err := redisClient.ZIncrBy(ctx, pollId, 1.0, pollOption.PollOptionId).Result()
+		resultAdd, err := redisClient.ZIncrBy(ctx, pollId, 1.0, pollOption.PollOptionId).Result()
 
 		if err != nil {
 			http.Error(w, "Failed to Increment vote count in Redis", http.StatusInternalServerError)
@@ -146,7 +149,7 @@ func VotePoll_Controller(vote *util.VotingPubSub) http.HandlerFunc {
 
 		vote.Publish(pollId, util.Message{
 			PollOptionID: pollOption.PollOptionId,
-			Votes:        result, 		})
+			Votes:        resultAdd})
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
