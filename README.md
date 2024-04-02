@@ -19,7 +19,7 @@ A real-time voting system where users can create a poll and other users can cast
 ## Setup
 - Clone the repository;
 - Install dependencies;
-- Setup PostgreSQL and Redis (docker compose up -d);
+- Setup PostgreSQL and Redis (`docker compose up -d`);
 - Run application
     (`go run ./main.go`);
     (`go build ./main.go` then run the exe)
