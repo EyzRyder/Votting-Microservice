@@ -31,29 +31,6 @@ func Poll_Controller(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redisClient, err := models.InitRedis()
-
-	defer redisClient.Close()
-
-	ctx := context.Background()
-	if err != nil {
-		http.Error(w, "Failed to connect to Redis", http.StatusInternalServerError)
-		log.Fatal(err)
-		return
-	}
-
-    rangeResults, err := redisClient.ZRangeWithScores(ctx,pollId,0,-1).Result()
-	if err != nil {
-		http.Error(w, "Failed to fetch poll options from Redis", http.StatusInternalServerError)
-		log.Fatal(err)
-		return
-	}
-
-    pollScores := make(map[string]float64)
-
-    for _,result := range rangeResults{
-        pollScores[result.Member.(string)] = result.Score
-    }
 
 	db, err := models.ConnectDB()
 	if err != nil {
@@ -89,7 +66,6 @@ func Poll_Controller(w http.ResponseWriter, r *http.Request) {
 	type Option struct {
 		Id    string `json:"id"`
 		Title string `json:"title"`
-        Score float64 `json:"score"`
 	}
 
 	var pollOptions []Option
@@ -105,7 +81,6 @@ func Poll_Controller(w http.ResponseWriter, r *http.Request) {
 		var pollOptoinCleaned Option
 		pollOptoinCleaned.Id = option.Id
 		pollOptoinCleaned.Title = option.Title
-        pollOptoinCleaned.Score = pollScores[option.Id]
 
 		pollOptions = append(pollOptions, pollOptoinCleaned)
 	}
