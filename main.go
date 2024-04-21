@@ -15,9 +15,10 @@ import (
 func main(){
     fmt.Println("Http server running")
 
-	vote := util.NewVotingPubSub()
+    vote := util.NewVotingPubSub()
 
     http.HandleFunc("/",controllers.Home_Controller)
+    http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
     http.HandleFunc("/polls",controllers.Polls_Controller)
     http.HandleFunc("/polls/{pollId}", controllers.Poll_Controller)
     http.HandleFunc("/polls/{pollId}/votes",controllers.VotePoll_Controller(vote))

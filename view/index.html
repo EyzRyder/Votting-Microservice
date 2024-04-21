@@ -1,0 +1,29 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTMX Polls</title>
+    <!-- Include HTMX library -->
+    <script src="https://unpkg.com/htmx.org@^1.6.0/dist/htmx.js"></script>
+</head>
+<body>
+    <h1>HTMX Polls</h1>
+    
+    <!-- Search form -->
+    <form hx-get="/search" hx-trigger="keyup delay:500ms">
+        <label for="search">Search Poll:</label>
+        <input type="text" id="search" name="search" placeholder="Enter poll title">
+    </form>
+
+    <!-- Create poll button -->
+    <button hx-get="/create" hx-target="#create-poll-modal">Create Poll</button>
+
+    <!-- Modal for creating poll -->
+    <div id="create-poll-modal" hx-target="#create-poll-modal">
+        <!-- Modal content here -->
+    </div>
+</body>
+</html>
+
