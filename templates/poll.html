@@ -7,12 +7,12 @@
 </head>
 <body>
     <div>
-        <h2>{{.Poll.Title}}</h2>
-        <p>Created At: {{.Poll.CreatedAt}}</p>
-        <p>Updated At: {{.Poll.UpdatedAt}}</p>
+        <h2>{{.Response.Poll.Title}}</h2>
+        <p>Created At: {{.CreatedAt}}</p>
+        <p>Updated At: {{.UpdatedAt}}</p>
         <h3>Options</h3>
         <ul>
-            {{range .PollOptions}}
+            {{range .Response.PollOptions}}
             <li>{{.Title}} - Score: {{.Score}}</li>
             {{end}}
         </ul>

@@ -5,8 +5,10 @@ import (
 	"log"
 	"net/http"
 	"html/template"
+    "time"
 
 	"go-api/util"
+	"go-api/models"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -71,8 +73,18 @@ func PollHtlm_Controller(w http.ResponseWriter, r *http.Request) {
 		return
     }
 
+    formatedRespondes := struct {
+        Response *models.Response
+        CreatedAt string
+        UpdatedAt string
+    }  {
+        Response:response,
+        CreatedAt: response.Poll.CreatedAt.Format(time.RFC822),
+            UpdatedAt: response.Poll.UpdatedAt.Format(time.RFC822),
+    }
+
     w.Header().Set("Content-Type", "text/html")
-	err = tmpl.Execute(w, response)
+	err = tmpl.Execute(w, formatedRespondes)
 	if err != nil {
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		log.Fatal(err)
