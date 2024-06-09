@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poll Details</title>
+</head>
+<body>
+    <div>
+        <h2>{{.Poll.Title}}</h2>
+        <p>Created At: {{.Poll.CreatedAt}}</p>
+        <p>Updated At: {{.Poll.UpdatedAt}}</p>
+        <h3>Options</h3>
+        <ul>
+            {{range .PollOptions}}
+            <li>{{.Title}} - Score: {{.Score}}</li>
+            {{end}}
+        </ul>
+    </div>
+</body>
+</html>

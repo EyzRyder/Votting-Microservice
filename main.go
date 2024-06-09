@@ -20,6 +20,7 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/polls", controllers.Polls_Controller)
 	http.HandleFunc("/polls/{pollId}", controllers.Poll_Controller)
+	http.HandleFunc("/pollsHtml/{pollId}", controllers.PollHtlm_Controller)
 	http.HandleFunc("/polls/{pollId}/votes", controllers.VotePoll_Controller(vote))
 	http.HandleFunc("/polls/{pollId}/results", ws.ResultsWebSocketHandler(vote))
 

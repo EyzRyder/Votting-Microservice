@@ -1,17 +1,17 @@
 package controllers
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
+	"html/template"
 
-	"go-api/models"
+	"go-api/util"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
+
 
 func Poll_Controller(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
@@ -24,106 +24,58 @@ func Poll_Controller(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing pollId parameter", http.StatusBadRequest)
 		return
 	}
-
-	_, err := uuid.Parse(pollId)
-	if err != nil {
-		http.Error(w, "Invalid pollID parameter", http.StatusBadRequest)
-		return
-	}
-
-	redisClient, err := models.InitRedis()
-
-	defer redisClient.Close()
-
-	ctx := context.Background()
-	if err != nil {
-		http.Error(w, "Failed to connect to Redis", http.StatusInternalServerError)
-		log.Fatal(err)
-		return
-	}
-
-    rangeResults, err := redisClient.ZRangeWithScores(ctx,pollId,0,-1).Result()
-	if err != nil {
-		http.Error(w, "Failed to fetch poll options from Redis", http.StatusInternalServerError)
-		log.Fatal(err)
-		return
-	}
-
-    pollScores := make(map[string]float64)
-
-    for _,result := range rangeResults{
-        pollScores[result.Member.(string)] = result.Score
+    _, err := uuid.Parse(pollId)
+    if err != nil {
+        http.Error(w, "Invalid pollID parameter", http.StatusBadRequest)
+        return
     }
 
-	db, err := models.ConnectDB()
+    response,err := util.GetPoll(w,pollId)
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		log.Fatal(err)
 		return
-	}
-
-	defer db.Close()
-
-	row := db.QueryRow("SELECT id, title, createdat, updatedat FROM poll WHERE id = $1", pollId)
-
-	var poll models.Poll
-	err = row.Scan(&poll.Id, &poll.Title, &poll.CreatedAt, &poll.UpdatedAt)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "Poll Not Found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "Failed to fetch poll", http.StatusInternalServerError)
-		log.Fatal(err)
-		return
-	}
-
-	rows, err := db.Query("SELECT id, title, pollid FROM polloption WHERE pollid = $1", pollId)
-	if err != nil {
-		http.Error(w, "Failed to fetch poll options", http.StatusInternalServerError)
-		log.Fatal(err)
-		return
-	}
-	defer rows.Close()
-
-	type Option struct {
-		Id    string `json:"id"`
-		Title string `json:"title"`
-        Score float64 `json:"score"`
-	}
-
-	var pollOptions []Option
-
-	for rows.Next() {
-		var option models.PollOption
-		err := rows.Scan(&option.Id, &option.Title, &option.PollId)
-		if err != nil {
-			http.Error(w, "Failed to fetch poll options", http.StatusInternalServerError)
-			log.Fatal(err)
-			return
-		}
-		var pollOptoinCleaned Option
-		pollOptoinCleaned.Id = option.Id
-		pollOptoinCleaned.Title = option.Title
-        pollOptoinCleaned.Score = pollScores[option.Id]
-
-		pollOptions = append(pollOptions, pollOptoinCleaned)
-	}
-
-	if err := rows.Err(); err != nil {
-		http.Error(w, "Failed to fetch poll options", http.StatusInternalServerError)
-		log.Fatal(err)
-		return
-	}
-
-	response := struct {
-		Poll        models.Poll `json:"poll"`
-		PollOptions []Option    `json:"pollOptions"`
-	}{
-		Poll:        poll,
-		PollOptions: pollOptions,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func PollHtlm_Controller(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method not", http.StatusMethodNotAllowed)
+		return
+	}
+
+	pollId := r.URL.Query().Get("pollId")
+	if pollId == "" {
+		http.Error(w, "Missing pollId parameter", http.StatusBadRequest)
+		return
+	}
+    _, err := uuid.Parse(pollId)
+    if err != nil {
+        http.Error(w, "Invalid pollID parameter", http.StatusBadRequest)
+        return
+    }
+
+    response,err := util.GetPoll(w,pollId)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+
+    tmpl, err := template.ParseFiles("templates/poll.html")
+    if err != nil {
+		http.Error(w, "Failed to load template", http.StatusInternalServerError)
+		log.Fatal(err)
+		return
+    }
+
+    w.Header().Set("Content-Type", "text/html")
+	err = tmpl.Execute(w, response)
+	if err != nil {
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		log.Fatal(err)
+		return
+	}
 }

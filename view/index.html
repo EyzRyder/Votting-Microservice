@@ -1,6 +1,7 @@
 <!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,24 +11,35 @@
     <!-- Include HTMX library -->
     <script src="https://unpkg.com/htmx.org@^1.6.0/dist/htmx.js"></script>
 </head>
+
 <body>
-<body class="bg-gray-100">
 
-<div class="container mx-auto px-4 py-8">
+    <body class="bg-gray-100">
 
-    <h1 class="text-3xl font-bold mb-4">HTMX Polls</h1>
+        <div class="container mx-auto px-4 py-8">
 
-    <!-- Search form -->
-    <form hx-get="/search" hx-trigger="keyup delay:500ms" class="mb-4">
-        <label for="search" class="sr-only">Search Poll:</label>
-        <input type="text" id="search" name="search" placeholder="Search Poll" class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
-    </form>
+            <h1 class="text-3xl font-bold mb-4">HTMX Polls</h1>
 
-    <!-- Create poll button -->
-    <a href="/createPoll" class="bg-blue-500 text-white px-4 py-2 rounded-md">Create Poll</a>
+            <!-- Search form -->
+            <form id="pollForm" hx-get="/pollsHtml/{id}"  hx-trigger="submit" hx-target="#pollResult"
+                class="mb-4">
+                <label for="pollId" class="sr-only">Search Poll:</label>
+                <input type="text" id="pollId" name="pollId" placeholder="Search Poll"
+                    class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500" required />
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md">
+                    Search Poll
+                </button>
+            </form>
+
+            <div id="pollResult">
+
+            </div>
+
+            <!-- Create poll button -->
+            <a href="/createPoll" class="bg-blue-500 text-white px-4 py-2 rounded-md">Create Poll</a>
 
 
-</div>
-</body>
+        </div>
+    </body>
+
 </html>
-
